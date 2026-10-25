@@ -1,0 +1,55 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Nightmare</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#09090d;color:#eee;margin:0}
+main{max-width:900px;margin:auto;padding:24px}
+.card{background:#171720;border:1px solid #383846;border-radius:14px;padding:20px;margin:18px 0}
+h1{color:#f55}button,select{width:100%;padding:13px;margin:8px 0;background:#29233f;color:white;border:1px solid #555;border-radius:8px}
+button{cursor:pointer}small{color:#aaa}
+</style>
+</head>
+<body>
+<main>
+<h1>Daily Nightmare</h1>
+<p>Your cartoon-horror story studio</p>
+<div class="card">
+<h2>Queue a horror short</h2>
+<label for="story">Choose a story</label>
+<select id="story">
+<option>The Door That Whispers</option>
+<option>The Last Train Home</option>
+<option>Something Under the Bed</option>
+<option>The Smiling Portrait</option>
+<option>Midnight Caller</option>
+</select>
+<label for="duration">Short duration</label>
+<select id="duration">
+<option>15 seconds</option>
+<option selected>30 seconds</option>
+<option>45 seconds</option>
+<option>60 seconds</option>
+</select>
+<button onclick="queueStory()">Prepare story</button>
+<p id="result">Your next nightmare is waiting...</p>
+</div>
+<div class="card">
+<h2>Production queue</h2>
+<p id="queue">No stories prepared yet.</p>
+<small>This starter page does not yet generate real videos or publish them automatically.</small>
+</div>
+</main>
+<script>
+function queueStory(){
+const story=document.getElementById('story').value;
+const duration=document.getElementById('duration').value;
+document.getElementById('result').textContent='Story selected: '+story;
+document.getElementById('queue').textContent=story+' — '+duration+'. Ready for production setup.';
+}
+</script>
+</body>
+</html>
