@@ -1,0 +1,8 @@
+{
+  "name": "daily-nightmare-v4-1",
+  "version": "4.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  }
+}
