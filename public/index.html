@@ -1,4 +1,4 @@
-
+HTML
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,51 +6,153 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Daily Nightmare</title>
 <style>
-body{font-family:system-ui,sans-serif;background:#09090d;color:#eee;margin:0}
-main{max-width:900px;margin:auto;padding:24px}
-.card{background:#171720;border:1px solid #383846;border-radius:14px;padding:20px;margin:18px 0}
-h1{color:#f55}button,select{width:100%;padding:13px;margin:8px 0;background:#29233f;color:white;border:1px solid #555;border-radius:8px}
-button{cursor:pointer}small{color:#aaa}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#28101b,#09090d 65%);color:#f6f2f4;font:16px system-ui,sans-serif}
+main{max-width:850px;margin:auto;padding:25px 16px 50px}
+header{text-align:center;padding:25px 0}
+h1{font-size:clamp(2.2rem,8vw,4rem);color:#ff5269;letter-spacing:2px;text-shadow:0 0 22px #a51d39;margin:0}
+header p,.muted,small{color:#aaaabb}
+.panel{background:#15151e;border:1px solid #383846;border-radius:16px;padding:20px;margin:18px 0;box-shadow:0 12px 35px #0006}
+h2{margin-top:0}
+label{display:block;margin:14px 0 7px;font-weight:600}
+select,button{width:100%;padding:14px;border-radius:10px;font:inherit}
+select{background:#09090f;color:white;border:1px solid #484858}
+button{margin-top:18px;background:#d62d45;color:white;border:0;font-weight:750;cursor:pointer}
+button:disabled{opacity:.6}
+.status{margin-top:14px;padding:12px;border-radius:9px;background:#0c0c12;white-space:pre-wrap}
+.job{border-top:1px solid #30303d;padding:14px 0}
+.job strong{color:#ff7184}
 </style>
 </head>
 <body>
 <main>
-<h1>Daily Nightmare</h1>
+<header>
+<h1>DAILY NIGHTMARE</h1>
 <p>Your cartoon-horror story studio</p>
-<div class="card">
+</header>
+
+<section class="panel">
 <h2>Queue a horror short</h2>
+<p class="muted">Choose an original story and prepare its production plan.</p>
+
 <label for="story">Choose a story</label>
-<select id="story">
-<option>The Door That Whispers</option>
-<option>The Last Train Home</option>
-<option>Something Under the Bed</option>
-<option>The Smiling Portrait</option>
-<option>Midnight Caller</option>
-</select>
+<select id="story"><option>Loading stories...</option></select>
+
 <label for="duration">Short duration</label>
 <select id="duration">
-<option>15 seconds</option>
-<option selected>30 seconds</option>
-<option>45 seconds</option>
-<option>60 seconds</option>
+<option value="15">15 seconds</option>
+<option value="30" selected>30 seconds</option>
+<option value="45">45 seconds</option>
+<option value="60">60 seconds</option>
 </select>
-<button onclick="queueStory()">Prepare story</button>
-<p id="result">Your next nightmare is waiting...</p>
-</div>
-<div class="card">
+
+<button id="prepare">Prepare story</button>
+<div id="status" class="status">Connecting to the story studio...</div>
+</section>
+
+<section class="panel">
 <h2>Production queue</h2>
-<p id="queue">No stories prepared yet.</p>
-<small>This starter page does not yet generate real videos or publish them automatically.</small>
-</div>
+<p class="muted">Your prepared story plans will appear here.</p>
+<div id="jobs">Loading queue...</div>
+</section>
+
+<p class="muted"><small>Preparing a story creates a production plan and scene prompts. Actual video rendering and automatic social publishing still need to be connected.</small></p>
 </main>
+
 <script>
-function queueStory(){
-const story=document.getElementById('story').value;
-const duration=document.getElementById('duration').value;
-document.getElementById('result').textContent='Story selected: '+story;
-document.getElementById('queue').textContent=story+' — '+duration+'. Ready for production setup.';
+const storySelect=document.getElementById('story');
+const statusBox=document.getElementById('status');
+const jobsBox=document.getElementById('jobs');
+const prepareButton=document.getElementById('prepare');
+
+async function request(path,options={}){
+ const response=await fetch(path,{
+  ...options,
+  headers:{'Content-Type':'application/json',...(options.headers||{})}
+ });
+ const data=await response.json().catch(()=>({error:'Unreadable server response'}));
+ if(!response.ok)throw new Error(data.error||data.message||'Request failed');
+ return data;
 }
+
+function getList(data,key){
+ return Array.isArray(data)?data:(data[key]||[]);
+}
+
+async function loadStories(){
+ try{
+  const stories=getList(await request('/api/stories'),'stories');
+  storySelect.innerHTML='';
+  stories.forEach(story=>{
+   const option=document.createElement('option');
+   option.value=story.id;
+   option.textContent=story.title;
+   storySelect.appendChild(option);
+  });
+  if(!stories.length){
+   storySelect.innerHTML='<option value="">No stories available</option>';
+  }
+  statusBox.textContent=stories.length
+   ?'Connected! '+stories.length+' stories ready.'
+   :'Connected, but no stories were returned.';
+ }catch(error){
+  storySelect.innerHTML='<option value="">Could not load stories</option>';
+  statusBox.textContent='Could not load stories: '+error.message;
+ }
+}
+
+async function loadJobs(){
+ try{
+  const jobs=getList(await request('/api/jobs'),'jobs');
+  if(!jobs.length){
+   jobsBox.innerHTML='<p class="muted">No stories prepared yet. Choose a story above to begin.</p>';
+   return;
+  }
+  jobsBox.innerHTML='';
+  jobs.slice().reverse().forEach(job=>{
+   const item=document.createElement('div');
+   item.className='job';
+   const title=document.createElement('strong');
+   title.textContent=job.title||job.storyTitle||job.storyId||'Horror short';
+   const detail=document.createElement('p');
+   detail.className='muted';
+   detail.textContent=(job.duration||30)+' seconds · Status: '+(job.status||'queued');
+   const id=document.createElement('small');
+   id.textContent='Job ID: '+(job.id||'—');
+   item.append(title,detail,id);
+   jobsBox.appendChild(item);
+  });
+ }catch(error){
+  jobsBox.textContent='Could not load queue: '+error.message;
+ }
+}
+
+prepareButton.addEventListener('click',async()=>{
+ if(!storySelect.value){
+  statusBox.textContent='Please choose a story first.';
+  return;
+ }
+ prepareButton.disabled=true;
+ statusBox.textContent='Preparing your story plan...';
+ try{
+  const result=await request('/api/jobs',{
+   method:'POST',
+   body:JSON.stringify({
+    storyId:storySelect.value,
+    duration:Number(document.getElementById('duration').value)
+   })
+  });
+  statusBox.textContent=result.message||'Story plan added to your production queue!';
+  await loadJobs();
+ }catch(error){
+  statusBox.textContent='Could not prepare story: '+error.message;
+ }finally{
+  prepareButton.disabled=false;
+ }
+});
+
+loadStories();
+loadJobs();
 </script>
 </body>
 </html>
-
